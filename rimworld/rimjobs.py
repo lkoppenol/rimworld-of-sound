@@ -1,9 +1,16 @@
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
+import tensorflow as tf
+from sklearn.preprocessing import OneHotEncoder
+from keras.layers import Dense
+from keras.models import Sequential
 
 from rimworld.utils import read_metadata
 from rimworld.rimsound import RimSound
+
+from loguru import logger
 
 
 def create_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = None) -> pd.DataFrame:
@@ -30,6 +37,57 @@ def create_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = 
     spectra = metadata.apply(_get_row_spectrum, axis=1)
 
     if metadata_columns:
-        spectra = spectra.join(metadata[metadata_columns])
+        spectra = metadata \
+            [metadata_columns] \
+            .join(spectra)
 
     return spectra
+
+
+def train_classifier_instrumentfamily_pitch(data_folder: Path):
+    # Multi-task learning
+    n = 12_000
+    split = int(n * 0.8)
+    phase = 'valid'
+
+    df = pd.read_csv(data_folder / f'dataset_{phase}.csv', index_col=0, nrows=n)
+
+    target_cols = ['pitch', 'instrument_family']
+    target = df[target_cols]
+    target_vector = pd.get_dummies(target, columns=target_cols)
+    df.drop(['velocity', 'instrument_family', 'pitch'], axis=1, inplace=True)
+
+    dataset_train = tf.data \
+        .Dataset \
+        .from_tensor_slices(
+            (
+                df.iloc[:split],
+                target_vector[:split]
+            )) \
+        .shuffle(1_000) \
+        .batch(128)
+
+    dataset_test = tf.data \
+        .Dataset \
+        .from_tensor_slices(
+            (
+                df.iloc[split:],
+                target_vector[split:]
+            )) \
+        .shuffle(1_000) \
+        .batch(128)
+
+    model = Sequential()
+    model.add(Dense(64, input_dim=df.shape[-1], activation='relu'))
+    model.add(Dense(target_vector.shape[-1], activation='sigmoid'))
+
+    loss = 'binary_crossentropy'
+    model.compile(
+        loss=loss,
+        optimizer=tf.optimizers.Adam(),
+        metrics=['accuracy']
+    )
+
+    model.fit(dataset_train, batch_size=15, epochs=250, validation_data=dataset_test, verbose=0)
+
+    return model
