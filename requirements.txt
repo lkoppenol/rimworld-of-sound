@@ -1,3 +1,4 @@
+loguru
 librosa
 matplotlib~=3.3
 numpy~=1.20
