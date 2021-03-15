@@ -69,7 +69,13 @@ class Gan:
 
     def generate(self, class_ids, randomized=True, plot_ready=False):
         vectors = self._get_vectors(class_ids, randomized)
-        generated = self.model.predict(vectors)
+        generated = self.get_generator().predict(vectors)
         if plot_ready:
             generated *= 255
         return generated
+
+    def get_generator(self):
+        return self.model.layers[0]
+
+    def get_discriminator(self):
+        return self.model.layers[1]

@@ -29,7 +29,7 @@ logger.info(f"Loaded '{datasource.name}' data with data shape {data_shape} conta
 discriminator = StraightDiscriminator(data_shape, num_classes) \
     .fit(train_data, discriminator_train_epochs, test_data) \
     .save('models/discriminator.h5')
-
+exit()
 generator = BaseGenerator(input_length=generator_input_classes, output_shape=data_shape)
 
 # GAN MET DIE BANAN
@@ -44,4 +44,4 @@ for epoch_count in range(0, epoch_max, epoch_step):
         epochs=epoch_step,
         validation_split=0.1
     )
-    generator.save(f'models/generator_{epoch_count}.h5')
+    gan.save(f'models/gan_{epoch_count:05}.h5')
