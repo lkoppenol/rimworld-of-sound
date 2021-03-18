@@ -17,6 +17,22 @@ def create_spectrum_dataset(data_type):
     spectra.to_csv(f'data/generated/dataset_{data_type}.csv')
 
 
+def create_moving_spectrum_dataset(data_set):
+    assert data_set in ['test', 'train', 'valid']
+    data_folder = Path(f"./data/nsynth-{data_set}/")
+
+    # TODO: what is best n_fft and what is n_fft uberhaupt?
+    lekkere_columns = ['note_str']
+    spectra = rimjobs.create_moving_spectrum_dataset(
+        data_folder,
+        n_fft=2048,
+        metadata_columns=lekkere_columns
+    )
+
+    spectra.to_csv(f'data/generated/dataset_stft_{data_set}.csv')
+    
 if __name__ == "__main__":
-    create_spectrum_dataset('test')
-    # create_spectrum_dataset('valid')
+    # create_spectrum_dataset('test')
+    # print("spectrum af")
+    create_moving_spectrum_dataset('test')
+    print("spectrum over time af")

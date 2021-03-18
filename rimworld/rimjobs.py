@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import pandas as pd
+import librosa
+import numpy as np
 
 from rimworld.utils import read_metadata
 from rimworld.rimsound import RimSound
@@ -33,3 +35,25 @@ def create_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = 
         spectra = spectra.join(metadata[metadata_columns])
 
     return spectra
+
+def create_moving_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = "note_str") -> pd.DataFrame:
+    
+    if type(data_folder) is str:
+        data_folder = Path(data_folder)
+
+    metadata = read_metadata(data_folder)    
+
+    def _get_row_stft(row):
+        wave_file = (data_folder / 'audio' / row.name).with_suffix(".wav")
+
+        y, sr = librosa.load(wave_file, sr=22050)
+
+        s = np.abs(librosa.stft(y, n_fft=n_fft)).flatten()
+
+        s = np.around(s, decimals=0, out=None)
+        
+        return pd.Series(s)
+
+    stft = metadata.apply(_get_row_stft, axis=1)
+    
+    return stft
