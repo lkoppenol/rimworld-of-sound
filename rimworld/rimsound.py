@@ -25,7 +25,8 @@ class RimSound:
 
     def get_spectrum(self) -> pd.Series:
         """
-        Converts raw audio (audiobuffer?) to a single spectrum. TODO: function for FFT instead of STFT
+        Converts raw audio (audiobuffer?) to a single spectrum by taking the sum for every bin over all units of time.
+        TODO: function for FFT instead of STFT
 
         :return: pandas Series, index is frequency, value is relative strength
         """
