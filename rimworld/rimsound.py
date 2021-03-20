@@ -15,6 +15,12 @@ class RimSound:
 
     @classmethod
     def from_wav(cls, path, sample_rate, **kwargs):
+        """
+        :param path: path to wav file
+        :param sample_rate: the number of samples per unit time
+        :param kwargs:
+        :return:
+        """
         raw_audio, sample_rate = librosa.load(path, sr=sample_rate)
         rim_sound = cls(
             raw_audio=raw_audio,

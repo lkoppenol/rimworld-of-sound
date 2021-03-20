@@ -140,7 +140,7 @@ def create_raw_audio_dataset(data_set: str, sample_rate = 22050,
             .join(raw_audio)
 
     if store=="csv":
-        raw_audio.to_csv(f'data/generated/dataset_stft_{data_set}.csv')
+        raw_audio.to_csv(f'data/generated/dataset_raw_audio_{data_set}.csv')
     
     return raw_audio
     
