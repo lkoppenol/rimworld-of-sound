@@ -29,11 +29,7 @@ class RimSound:
 
         :return: pandas Series, index is frequency, value is relative strength
         """
-        short_time_spectrum_i = librosa.stft(
-            self.raw_audio,
-            n_fft=self.n_fft
-        )
-        short_time_spectrum = np.abs(short_time_spectrum_i)
+        short_time_spectrum = self.get_short_time_spectrum()
         raw_spectrum = short_time_spectrum.sum(axis=1)
         frequencies = librosa.fft_frequencies(
             sr=self.sample_rate,
@@ -41,3 +37,12 @@ class RimSound:
         )
         spectrum = pd.Series(raw_spectrum, frequencies)
         return spectrum
+
+    def get_short_time_spectrum(self):
+        short_time_spectrum_i = librosa.stft(
+            self.raw_audio,
+            n_fft=self.n_fft
+        )
+        short_time_spectrum = np.abs(short_time_spectrum_i)
+        db_spectrum = librosa.amplitude_to_db(short_time_spectrum, ref=np.max)
+        return db_spectrum
