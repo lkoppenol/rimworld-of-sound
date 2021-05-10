@@ -1,9 +1,13 @@
+import os
+from glob import glob
 from pathlib import Path
 
+import librosa
 import pandas as pd
 import librosa
 import numpy as np
 
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from sklearn.preprocessing import OneHotEncoder
 from keras.layers import Dense
@@ -192,3 +196,15 @@ def train_classifier_instrumentfamily_pitch(data_folder: Path):
     model.fit(dataset_train, batch_size=15, epochs=250, validation_data=dataset_test, verbose=0)
 
     return model
+
+
+
+def create_stft_dataset(folder_in: str, folder_out: str, sample_rate=16_000):
+    wav_names = glob(os.path.join(folder_in, '*.wav'))
+    for wav_name in wav_names:
+        spectrum = RimSound \
+            .from_wav(wav_name, sample_rate) \
+            .get_short_time_spectrum()
+        path_out = os.path.join(folder_out, os.path.split(wav_name)[-1] + '.png')
+        logger.info(f"writing {path_out}")
+        plt.imsave(path_out, spectrum.T, cmap='gray')
