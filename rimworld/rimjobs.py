@@ -4,7 +4,9 @@ from pathlib import Path
 
 import librosa
 import pandas as pd
+import librosa
 import numpy as np
+
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from sklearn.preprocessing import OneHotEncoder
@@ -16,18 +18,36 @@ from rimworld.rimsound import RimSound
 
 from loguru import logger
 
+"""
+This module assumes you have downloaded the Nsynth data set from https://magenta.tensorflow.org/datasets/nsynth
+and save it under a folder called data
+"""
 
-def create_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = None) -> pd.DataFrame:
+
+def _create_valid_path(data_set: str) -> Path:
     """
-    Create a dataset with fourier spectra for each sound-id, based on a metadata file
+    Get a valid Path from either train, valid, or test set
+    :param data_set: train, valid or test
+    :return: pathlib.Path, path to dataset
+    """
+    assert data_set in ['test', 'train', 'valid']
+    data_folder = Path(f"./data/nsynth-{data_set}/")
+    if type(data_folder) is str:
+        data_folder = Path(data_folder)
 
-    :param data_folder: root folder of dataset, for example `Path('./data/nsynth-test')`
+    return data_folder
+
+
+def create_spectrum_dataset(data_set: str, n_fft=2048, metadata_columns: [str] = ['instrument', 'pitch', 'velocity'],
+                            store: str = "csv") -> pd.DataFrame:
+    """
+    :param data_str: train, valid, or test
     :param n_fft: see [stft](https://librosa.org/doc/0.8.0/generated/librosa.stft.html)
     :param metadata_columns: list of metadata columns to keep
     :return: pandas DataFrame, a row for each sound-id, a column for each frequency. value is relative amplitude
     """
-    if type(data_folder) is str:
-        data_folder = Path(data_folder)
+
+    data_folder = _create_valid_path(data_set)
 
     metadata = read_metadata(data_folder)
 
@@ -45,8 +65,89 @@ def create_spectrum_dataset(data_folder: Path, n_fft, metadata_columns: [str] = 
             [metadata_columns] \
             .join(spectra)
 
+    if store=="csv":
+        spectra.to_csv(f'data/generated/dataset_{data_set}.csv')
+
     return spectra
 
+
+def create_moving_spectrum_dataset(data_set: str,
+                                   n_fft=2048,
+                                   metadata_columns: [str] = ['instrument', 'pitch', 'velocity','instrument_source_str',
+                                                              "instrument_source",  'instrument_family_str'],
+                                   store: str = "csv") -> pd.DataFrame:
+    """
+    Create a dataset with fourier spectra over time for each sound-id, based on a metadata file.
+
+    :param data_str: train, valid or test
+    :param n_fft: see [stft](https://librosa.org/doc/0.8.0/generated/librosa.stft.html)
+    :param metadata_columns: list of metadata columns to keep
+    :param store: filetype to store the loaded data set in, if any.
+    :return: pandas DataFrame, a row for each sound-id, a column for each frequency. value is relative amplitude
+    """
+    data_folder = _create_valid_path(data_set)
+
+    metadata = read_metadata(data_folder)    
+
+    def _get_row_stft(row):
+        wave_file = (data_folder / 'audio' / row.name).with_suffix(".wav")
+
+        y, sr = librosa.load(wave_file, sr=22050)
+
+        s = np.abs(librosa.stft(y, n_fft=n_fft)).flatten()
+
+        s = np.around(s, decimals=0, out=None)
+        
+        return pd.Series(s)
+
+    stft = metadata.apply(_get_row_stft, axis=1)
+
+    if metadata_columns:
+        stft = metadata \
+            [metadata_columns] \
+            .join(stft)
+
+    if store=="csv":
+        stft.to_csv(f'data/generated/dataset_stft_{data_set}.csv')
+    
+    return stft
+
+
+def create_raw_audio_dataset(data_set: str, sample_rate = 22050,
+                             metadata_columns: [str] = ['instrument', 'pitch', 'velocity','instrument_source_str',
+                                                              "instrument_source",  'instrument_family_str'],
+                             store: str = "csv") -> pd.DataFrame:
+    """
+
+    :param data_set: train, valid or test
+    :param sample_rate: samplerate to load the wav file with. n_fft 2048 with sample rate of 22050 works best
+    :param metadata_columns: list of metadata columns to keep
+    :param store: filetype to store the loaded data set in, if any.
+    :return: pandas DataFrame, a row for each sound-id, a column for each frequency. value is relative amplitude
+    :return:
+    """
+    data_folder = _create_valid_path(data_set)
+    metadata = read_metadata(data_folder)
+
+    def _get_row_audio(row):
+        wave_file = (data_folder / 'audio' / row.name).with_suffix(".wav")
+
+        y, sr = librosa.load(wave_file, sr=sample_rate)
+     
+        return pd.Series(y)
+
+    raw_audio = metadata.apply(_get_row_audio, axis=1)
+
+    if metadata_columns:
+        raw_audio = metadata \
+            [metadata_columns] \
+            .join(raw_audio)
+
+    if store=="csv":
+        raw_audio.to_csv(f'data/generated/dataset_raw_audio_{data_set}.csv')
+    
+    return raw_audio
+    
 
 def train_classifier_instrumentfamily_pitch(data_folder: Path):
     # Multi-task learning
@@ -95,6 +196,7 @@ def train_classifier_instrumentfamily_pitch(data_folder: Path):
     model.fit(dataset_train, batch_size=15, epochs=250, validation_data=dataset_test, verbose=0)
 
     return model
+
 
 
 def create_stft_dataset(folder_in: str, folder_out: str, sample_rate=16_000):

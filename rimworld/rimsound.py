@@ -15,6 +15,12 @@ class RimSound:
 
     @classmethod
     def from_wav(cls, path, sample_rate, **kwargs):
+        """
+        :param path: path to wav file
+        :param sample_rate: the number of samples per unit time
+        :param kwargs:
+        :return:
+        """
         raw_audio, sample_rate = librosa.load(path, sr=sample_rate)
         rim_sound = cls(
             raw_audio=raw_audio,
@@ -25,7 +31,8 @@ class RimSound:
 
     def get_spectrum(self) -> pd.Series:
         """
-        Converts raw audio (audiobuffer?) to a single spectrum. TODO: function for FFT instead of STFT
+        Converts raw audio (audiobuffer?) to a single spectrum by taking the sum for every bin over all units of time.
+        TODO: function for FFT instead of STFT
 
         :return: pandas Series, index is frequency, value is relative strength
         """
