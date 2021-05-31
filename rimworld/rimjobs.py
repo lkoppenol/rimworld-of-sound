@@ -201,6 +201,7 @@ def train_classifier_instrumentfamily_pitch(data_folder: Path):
 
 def create_stft_dataset(folder_in: str, folder_out: str, sample_rate=16_000):
     wav_names = glob(os.path.join(folder_in, '*.wav'))
+    print(len(wav_names))
     for wav_name in wav_names:
         spectrum = RimSound \
             .from_wav(wav_name, sample_rate) \
