@@ -1,8 +1,6 @@
 import abc
 import random
-
 from tensorflow import keras
-from tensorflow.keras import layers
 
 
 class Discriminator(abc.ABC):

@@ -27,6 +27,7 @@ class Generator(abc.ABC):
         return self
 
 
+
 class BaseGenerator(Generator):
     def __init__(self, input_length: int, output_shape: (int,)):
         name = f'base_generator_{random.randint(0, 999999):06}'
