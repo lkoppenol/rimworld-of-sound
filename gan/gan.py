@@ -58,7 +58,7 @@ class Gan:
             bonus_vector = np.random.randn(1, self.input_classes - self.output_classes)
         else:
             bonus_vector = np.ones((1, self.input_classes - self.output_classes)) * non_random
-        vector = np.concatenate((np.zeros((1, 11)), bonus_vector), axis=1)
+        vector = np.concatenate((np.zeros((1, self.output_classes)), bonus_vector), axis=1)
         if class_id < self.output_classes:  # Assume last class is noise class
             vector[0, class_id] = 1
         return vector

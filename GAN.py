@@ -2,10 +2,10 @@ from gan.discriminator import MultiLabelDiscriminator
 from gan.gan import Gan
 from gan.generator import BaseGenerator
 from loguru import logger
-from PIL import Image
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from rimworld.utils import *
-import keras
+import soundfile as sf
 
 load_dotenv()
 
@@ -53,7 +53,9 @@ def main():
 
     test_labels = []
     for sample_name in waves:
-        test_labels.append(get_label(sample_name, LABEL_ID, label_shapes[LABEL_ID]))
+        test_labels.append(np.argmax(np.array(get_label(sample_name, LABEL_ID, label_shapes[LABEL_ID]))))
+
+
 
     if DEBUG_MODE:
         import time
@@ -99,14 +101,14 @@ def main():
         gan.get_generator().save(f'models/{generator_description}/epoch_{epoch_count:05}/generator.h5')
         gan.save(f'models/{generator_description}/epoch_{epoch_count:05}/gan.h5')
         for idx, label in enumerate(test_labels):
-            spectrogram = gan.get_generator().predict(np.reshape(np.array(label), (None, 560)))
-            img = Image.fromarray(spectrogram)
-            img.save(f'models/{generator_description}/epoch_{epoch_count:05}/images/{waves[idx]}.png')
-            wave = reconstruct_from_sliding_spectrum(spectrogram)
-            librosa.output.write_wav(f'models/{generator_description}/epoch_{epoch_count:05}/sounds/{waves[idx]}.wav',
-                                     wave,
-                                     SAMPLE_RATE)
-
+            spectrogram = gan.generate([label], False, True)
+            stft = gan.generate([label], False, False)
+            plt.imshow(spectrogram, cmap='gray')
+            # [:-8] because we have dumb file names x.wav.png[:-8] = x
+            plt.savefig(f'models/{generator_description}/epoch_{epoch_count:05}/images/{waves[idx][:-8]}.png')
+            wave = reconstruct_from_sliding_spectrum(stft[])
+            sf.write(f'models/{generator_description}/epoch_{epoch_count:05}/sounds/{waves[idx][:-8]}.wav', wave,
+                     SAMPLE_RATE)
 
 
 if __name__ == "__main__":
