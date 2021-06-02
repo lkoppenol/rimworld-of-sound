@@ -8,7 +8,7 @@ load_dotenv()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-DEBUG = True
+DEBUG = False
 
 ROOT_FOLDER = os.getenv('ROOT_FOLDER')
 if DEBUG:
@@ -25,23 +25,14 @@ if DEBUG:
 
 model = keras.Sequential([
     keras.layers.Input(shape=(126, 1025, 1)),
+    keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME"),
+    keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME"),
+    keras.layers.MaxPooling2D(pool_size=(3, 10)),
+    keras.layers.Conv2D(16, kernel_size=(3, 3), activation='swish', padding="SAME"),
+    keras.layers.Conv2D(16, kernel_size=(3, 3), activation='swish', padding="SAME"),
+    keras.layers.MaxPooling2D(pool_size=(3, 10)),
     keras.layers.Conv2D(32, kernel_size=(3, 3), activation='swish', padding="SAME"),
     keras.layers.Conv2D(32, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.MaxPooling2D(pool_size=(2, 2)),
-    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.MaxPooling2D(pool_size=(2, 2)),
-    keras.layers.Conv2D(128, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.Conv2D(128, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.MaxPooling2D(pool_size=(2, 2)),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.MaxPooling2D(pool_size=(2, 2)),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.MaxPooling2D(pool_size=(2, 2)),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
-    keras.layers.Conv2D(256, kernel_size=(3, 3), activation='swish', padding="SAME"),
     keras.layers.Flatten(),
     keras.layers.Dense(label_shapes[LABEL], activation='softmax'),
 ])
