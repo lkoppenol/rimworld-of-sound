@@ -14,8 +14,8 @@ class Discriminator(abc.ABC):
     def _compile_model(self):
         raise NotImplementedError
 
-    def fit(self, train_data, epochs, validation_data=None, steps_per_epoch=None):
-        self.model.fit(train_data, epochs=epochs, validation_data=validation_data, steps_per_epoch=steps_per_epoch)
+    def fit(self, train_data, epochs, validation_data=None, **kwargs):
+        self.model.fit(train_data, epochs=epochs, validation_data=validation_data, **kwargs)
         return self
 
     def save(self, path):
