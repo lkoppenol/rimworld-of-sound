@@ -33,6 +33,7 @@ label_shapes = dict(
     pitch=128,
     instrument_subtype_and_pitch=5+112,  # 4 instruments, 1 other, 112 pitches
     instrument_and_pitch_single_label=5*112, # same but then single label so more labels
+    organ_pitcher=62+1 #020 is lowest, 081 is highest, +1 for all other stuff
 )
 
 
@@ -42,11 +43,12 @@ def get_label(filename, label_type, label_size):
         "instrument_subtype": get_instrument_subtype_label,
         "pitch": get_pitch_label,
         "instrument_subtype_and_pitch": get_multi_label,
-        "instrument_and_pitch_single_label": get_instrument_and_pitch
+        "instrument_and_pitch_single_label": get_instrument_and_pitch,
+        "organ_pitcher": get_organ_pitch_label,
     }
     # just a hacky solution to cope with the fact that we havent taken the effort yet to make this code clean
     # but still be able to add more label methods
-    sparse_labels = ["instrument_and_pitch_single_label", "instrument_subtype_and_pitch"]
+    sparse_labels = ["instrument_and_pitch_single_label", "instrument_subtype_and_pitch", "organ_pitcher"]
     if label_type not in sparse_labels:
         sparse_label = switch[label_type](filename)
         label = np.zeros((label_size, 1))
@@ -72,6 +74,25 @@ def get_instrument_label(filename):
         'vocal': 10,
     }
     return switch[instrument]
+
+
+def get_organ_pitch_label(filename):
+    """
+    Return onehotencoded list where index 0 - 61 are pitches 020 to 081 of the electronic organ, index 82 is all other classes
+    """
+    label = np.zeros(label_shapes["organ_pitcher"])
+    subtype_label = get_instrument_subtype_label(filename)
+    pitch_label = get_pitch_label(filename)
+    # 19 is electronic organ
+    if subtype_label != 19:
+        label[label_shapes["organ_pitcher"]-1] = 1
+    else:
+        if 19 < pitch_label < 82:
+            label[pitch_label - 20] = 1
+        else:
+            label[label_shapes["organ_pitcher"] - 1] = 1
+        
+    return label
 
 
 def get_instrument_subtype_label(filename):
