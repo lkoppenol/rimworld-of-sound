@@ -12,16 +12,10 @@ load_dotenv()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-DEBUG_MODE = False
 # create .env in root folder, for example:
 # ROOT_FOLDER=D:\Projects\nsynth-data\data\stft
-# TEST_SOUNDS_FOLDER = D:\Projects\nsynth-data\data\nsynth-test\audio
 ROOT_FOLDER = os.getenv('ROOT_FOLDER')
-TEST_SOUNDS_FOLDER = os.getenv('TEST_SOUNDS_FOLDER')
 
-
-if DEBUG_MODE:
-    print(ROOT_FOLDER)
 # LABEL = 'instrument_subtype'
 # LABEL_ID = 'instrument_and_pitch_single_label'
 # LABEL = 'no_organ'
@@ -30,7 +24,7 @@ BATCH_SIZE = 32
 EPOCHS = 200
 SAMPLE_RATE = 16000
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 if DEBUG_MODE:
     logger.warning("WARNING WARNING DEBUG MODE IS ON WARNING WARNING")
@@ -88,7 +82,8 @@ def main(label):
         discriminator.fit(
             train_dataset,
             epochs=1,
-            validation_data=valid_dataset
+            validation_data=valid_dataset,
+            steps_per_epoch=1000
         )
         logger.info("GAN-ORREA")
         gan.fit(
@@ -101,9 +96,10 @@ def main(label):
         generated = gan.generate(range(label_size))
 
         for i, g in enumerate(generated):
-            name = f"{id:.0f}-{epoch_count:04}-{i:04}"
-            save_img(g, name)
-            save_wav(g, name)
+            if i % 10 == 0:
+                name = f"{id:.0f}-{epoch_count:04}-{i:04}"
+                save_img(g, name)
+                save_wav(g, name)
         logger.info("REPEAT")
 
 

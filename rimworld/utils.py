@@ -33,7 +33,7 @@ label_shapes = dict(
     instrument_subtype=33,
     pitch=128,
     instrument_subtype_and_pitch=5+112,  # 4 instruments, 1 other, 112 pitches
-    instrument_and_pitch_single_label=5*112, # same but then single label so more labels
+    instrument_and_pitch_single_label=5*112,  # same but then single label so more labels
     no_organ=2,
     organ_pitch=129,
 )
