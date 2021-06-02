@@ -24,8 +24,9 @@ if DEBUG_MODE:
     print(ROOT_FOLDER)
 # LABEL = 'instrument_subtype'
 # LABEL_ID = 'instrument_and_pitch_single_label'
-LABEL = 'no_organ'
-BATCH_SIZE =32
+# LABEL = 'no_organ'
+LABEL = 'organ_pitch'
+BATCH_SIZE = 32
 EPOCHS = 200
 SAMPLE_RATE = 16000
 

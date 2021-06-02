@@ -34,7 +34,8 @@ label_shapes = dict(
     pitch=128,
     instrument_subtype_and_pitch=5+112,  # 4 instruments, 1 other, 112 pitches
     instrument_and_pitch_single_label=5*112, # same but then single label so more labels
-    no_organ=2
+    no_organ=2,
+    organ_pitch=129,
 )
 
 
@@ -45,7 +46,8 @@ def get_label(filename, label_type, label_size):
         "pitch": get_pitch_label,
         "instrument_subtype_and_pitch": get_multi_label,
         "instrument_and_pitch_single_label": get_instrument_and_pitch,
-        "no_organ": get_no_organ_label
+        "no_organ": get_no_organ_label,
+        "organ_pitch": get_organ_pitch_label,
     }
     # just a hacky solution to cope with the fact that we havent taken the effort yet to make this code clean
     # but still be able to add more label methods
@@ -83,6 +85,10 @@ def get_no_organ_label(filename):
         return 1
     else:
         return 0
+
+
+def get_organ_pitch_label(filename):
+    return get_no_organ_label(filename) * get_pitch_label(filename)
 
 
 def get_instrument_subtype_label(filename):
