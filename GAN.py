@@ -100,14 +100,20 @@ def main():
         )
         gan.get_generator().save(f'models/{generator_description}/epoch_{epoch_count:05}/generator.h5')
         gan.save(f'models/{generator_description}/epoch_{epoch_count:05}/gan.h5')
-        for idx, label in enumerate(test_labels):
-            spectrogram = gan.generate([label], False, True)
-            stft = gan.generate([label], False, False)
-            plt.imshow(spectrogram, cmap='gray')
-            # [:-8] because we have dumb file names x.wav.png[:-8] = x
-            plt.savefig(f'models/{generator_description}/epoch_{epoch_count:05}/images/{waves[idx][:-8]}.png')
-            wave = reconstruct_from_sliding_spectrum(stft[])
-            sf.write(f'models/{generator_description}/epoch_{epoch_count:05}/sounds/{waves[idx][:-8]}.wav', wave,
+        generated = gan.generate(test_labels, False, False)
+        spectrograms = gan.generate(test_labels, False, True)
+
+        images_dir = f'models/{generator_description}/epoch_{epoch_count:05}/images'
+        os.mkdir(images_dir)
+        for idx, s in enumerate(spectrograms):
+            plt.imshow(s, cmap='gray')
+            plt.savefig(f'{images_dir}/{waves[idx][:-8]}.png')
+
+        sounds_dir = f'models/{generator_description}/epoch_{epoch_count:05}/sounds'
+        os.mkdir(sounds_dir)
+        for idx in range(len(waves)):
+            s = reconstruct_from_sliding_spectrum(generated[idx, :, :, 0])
+            sf.write(f'{sounds_dir}/{waves[idx][:-8]}.wav', s,
                      SAMPLE_RATE)
 
 
