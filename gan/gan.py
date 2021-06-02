@@ -7,10 +7,10 @@ class Gan:
         self.input_classes = input_classes
         self.output_classes = output_classes
         self.model = None
+        self.discriminator = None
 
     @classmethod
     def from_couple(cls, generator, discriminator):
-        discriminator.trainable = False
         input_classes = generator.input_length
         output_classes = discriminator.num_classes
         gan = cls(input_classes, output_classes)
@@ -18,6 +18,7 @@ class Gan:
             generator.model,
             discriminator.model
         ])
+        gan.discriminator = discriminator
         gan.compile_model()
         return gan
 
@@ -41,8 +42,10 @@ class Gan:
         return x, y
 
     def fit(self, sample_size, batch_size, epochs, validation_split):
+        self.discriminator.model.trainable = False
         x, y = self._generate_samples(sample_size)
         self.model.fit(x, y, epochs=epochs, batch_size=batch_size, validation_split=validation_split)
+        self.discriminator.model.trainable = True
         return self
 
     def save(self, path):

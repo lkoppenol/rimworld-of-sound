@@ -5,6 +5,7 @@ import tensorflow as tf
 import os
 import librosa
 
+
 def read_metadata(data_folder: Path, instrument_filter: str=None, filename: str="examples.json") -> pd.DataFrame:
     """
     Read an NSynth metadatafile from disk as pandas DataFrame.
@@ -33,6 +34,7 @@ label_shapes = dict(
     pitch=128,
     instrument_subtype_and_pitch=5+112,  # 4 instruments, 1 other, 112 pitches
     instrument_and_pitch_single_label=5*112, # same but then single label so more labels
+    no_organ=2
 )
 
 
@@ -42,7 +44,8 @@ def get_label(filename, label_type, label_size):
         "instrument_subtype": get_instrument_subtype_label,
         "pitch": get_pitch_label,
         "instrument_subtype_and_pitch": get_multi_label,
-        "instrument_and_pitch_single_label": get_instrument_and_pitch
+        "instrument_and_pitch_single_label": get_instrument_and_pitch,
+        "no_organ": get_no_organ_label
     }
     # just a hacky solution to cope with the fact that we havent taken the effort yet to make this code clean
     # but still be able to add more label methods
@@ -72,6 +75,14 @@ def get_instrument_label(filename):
         'vocal': 10,
     }
     return switch[instrument]
+
+
+def get_no_organ_label(filename):
+    instrument = "_".join(filename.split('_')[:-2])
+    if instrument == 'organ':
+        return 1
+    else:
+        return 0
 
 
 def get_instrument_subtype_label(filename):
