@@ -50,8 +50,8 @@ def main(label):
     label_size = label_shapes[label]
     img_size = (126, 1025, 1)
     id = time()
-    class_weights = {i: 1 for i in range(1, label_size)}
-    class_weights[0] = 0.01
+    class_weight = {i: 1 for i in range(1, label_size)}
+    class_weight[0] = 0.01
 
     train_folder = os.path.join(ROOT_FOLDER, 'train')
     train_dataset = get_image_dataset(train_folder, label, label_size, BATCH_SIZE)
@@ -85,8 +85,7 @@ def main(label):
             train_dataset,
             epochs=1,
             validation_data=valid_dataset,
-            steps_per_epoch=1000,
-            class_weights=class_weights
+            steps_per_epoch=1000
         )
         logger.info("GAN-ORREA")
         gan.fit(

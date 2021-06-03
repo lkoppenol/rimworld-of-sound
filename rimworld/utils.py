@@ -171,7 +171,7 @@ def get_image_dataset(path, label_type, label_size, batch_size):
             labels=labels,
             color_mode='grayscale',
             batch_size=batch_size,
-            image_size=(126, 1025)
+            image_size=(126, 1025),
         ) \
         .shuffle(32)
     return dataset
