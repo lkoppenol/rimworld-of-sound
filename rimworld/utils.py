@@ -163,6 +163,10 @@ def reset(batch_size, label_size):
 
 
 def get_image_dataset(path, label_type, label_size, batch_size):
+    def normalize_function(image, label):
+        image = tf.cast(image / 255., tf.float32)
+        return image, label
+
     filenames = [f for r, d, fs in os.walk(path) for f in fs]  # tf uses os.walk to determine file order
     labels = [get_label(filename, label_type, label_size) for filename in filenames]
     dataset = tf.keras.preprocessing \
@@ -173,7 +177,8 @@ def get_image_dataset(path, label_type, label_size, batch_size):
             batch_size=batch_size,
             image_size=(126, 1025),
         ) \
-        .shuffle(32)
+        .shuffle(32) \
+        .map(normalize_function)
     return dataset
 
 

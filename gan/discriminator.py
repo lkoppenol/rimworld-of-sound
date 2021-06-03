@@ -57,7 +57,7 @@ class LabelDiscriminator(Discriminator):
         super().__init__(input_shape, num_classes, name)
 
     @staticmethod
-    def custom_loss(real_loss, noise_class=0, noise_weight=0.001):
+    def custom_loss(real_loss, noise_class=0, noise_weight=0.01):
         """
         Usage:
         loss = self.custom_loss(keras.losses.categorical_crossentropy)

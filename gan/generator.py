@@ -37,7 +37,7 @@ class BaseGenerator(Generator):
         generator = keras.Sequential([
             keras.Input(shape=self.input_length),
             layers.Dense(output_values, activation='sigmoid'),
-            layers.Dropout(0.5),
             layers.Reshape(self.output_shape)
         ], name='generator')
+        generator.summary()
         return generator
