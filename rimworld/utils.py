@@ -180,10 +180,13 @@ def get_image_dataset(path, label_type, label_size, batch_size, n_random_samples
         .map(normalize_function)
 
     if n_random_samples:
-        random_batches = int(n_random_samples / batch_size)
-        noise = tf.random.uniform((random_batches, batch_size, 126, 1025, 1))
-        labels = tf.constant(0, shape=(random_batches, batch_size), dtype=tf.float64)
-        random_dataset = tf.data.Dataset.from_tensor_slices((noise, labels))
-        return dataset.concatenate(random_dataset).shuffle(32)
+        noise = tf.random.uniform((n_random_samples, 126, 1025, 1))
+        labels = tf.one_hot([0 for _ in range(n_random_samples)], depth=label_size, dtype=tf.float64)
+        random_dataset = tf.data.Dataset \
+            .from_tensor_slices((noise, labels)) \
+            .batch(batch_size) \
+            .concatenate(dataset) \
+            .shuffle(32)
+        return random_dataset
     else:
         return dataset.shuffle(32)

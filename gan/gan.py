@@ -40,10 +40,10 @@ class Gan:
         return x, y
 
     def fit(self, sample_size, batch_size, epochs, validation_split):
-        self.get_generator().model.trainable = False
+        self.get_generator().trainable = False
         x, y = self._generate_samples(sample_size)
         self.model.fit(x, y, epochs=epochs, batch_size=batch_size, validation_split=validation_split)
-        self.get_generator().model.trainable = True
+        self.get_generator().trainable = True
         return self
 
     def save(self, path):

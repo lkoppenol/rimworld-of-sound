@@ -36,7 +36,9 @@ class BaseGenerator(Generator):
         output_values = reduce(operator.mul, self.output_shape, 1)
         generator = keras.Sequential([
             keras.Input(shape=self.input_length),
-            layers.Dense(output_values, activation='sigmoid'),
-            layers.Reshape(self.output_shape)
+            layers.Dense(output_values, activation='relu'),
+            layers.Reshape(self.output_shape),
+            layers.Conv2D(8, (5, 5), padding='same'),
+            layers.Conv2D(1, (1, 1), padding='same', activation='sigmoid')
         ], name='generator')
         return generator

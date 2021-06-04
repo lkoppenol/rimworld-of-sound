@@ -40,7 +40,7 @@ def save_img(g, name, folder='img'):
     folder = Path(folder)
     folder.mkdir(exist_ok=True, parents=True)
     path = folder / Path(name).with_suffix('.png')
-    plt.imsave(str(path), g[:, :, 0], format='png', cmap='gray', vmin=0, vmax=1)
+    plt.imsave(str(path), g[:, :, 0], format='png', cmap='gray')
 
 
 def save_wav(g, name, folder='wav'):
@@ -60,9 +60,22 @@ def main(label):
     class_weight[0] = 0.01
 
     train_folder = os.path.join(ROOT_FOLDER, 'train')
-    train_dataset = utils.get_image_dataset(train_folder, label, label_size, BATCH_SIZE, n_random_samples=1e3)
+    train_dataset = utils.get_image_dataset(
+        train_folder,
+        label,
+        label_size,
+        BATCH_SIZE,
+        n_random_samples=int(1e3)
+    )
+
     valid_folder = os.path.join(ROOT_FOLDER, 'valid')
-    valid_dataset = utils.get_image_dataset(valid_folder, label, label_size, BATCH_SIZE, n_random_samples=3e2)
+    valid_dataset = utils.get_image_dataset(
+        valid_folder,
+        label,
+        label_size,
+        BATCH_SIZE,
+        n_random_samples=int(3e2)
+    )
 
     if DEBUG_MODE:
         subsample = 10
@@ -86,21 +99,21 @@ def main(label):
     epoch_step = 1
     epoch_max = 200
     for epoch_count in range(0, epoch_max, epoch_step):
-        logger.info("DISCRIMINATE")
+        logger.info(f"{epoch_count:03} DISCRIMINATE")
         discriminator.fit(
             train_dataset,
             epochs=1,
             validation_data=valid_dataset,
             steps_per_epoch=2048
         )
-        logger.info("GAN-ORREA")
+        logger.info(f"{epoch_count:03} GAN-ORREA")
         gan.fit(
             sample_size=int(2e4),
             batch_size=int(1e2),
             epochs=epoch_step,
             validation_split=0.1
         )
-        logger.info("GENERATE")
+        logger.info(f"{epoch_count:03} GENERATE")
         generated = gan.generate(range(label_size))
 
         for i, g in enumerate(generated):
@@ -108,7 +121,6 @@ def main(label):
                 name = f"{id:.0f}-{epoch_count:04}-{i:04}"
                 save_img(g, name)
                 save_wav(g, name)
-        logger.info("REPEAT")
 
 
 if __name__ == "__main__":
