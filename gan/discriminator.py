@@ -2,6 +2,7 @@ import abc
 import random
 from tensorflow import keras
 from tensorflow.python.keras.backend import argmax, equal, cast, floatx
+from tensorflow.python.keras.optimizer_v2.adam import Adam
 
 
 class Discriminator(abc.ABC):
@@ -57,7 +58,7 @@ class LabelDiscriminator(Discriminator):
         super().__init__(input_shape, num_classes, name)
 
     @staticmethod
-    def custom_loss(real_loss, noise_class=0, noise_weight=0.01):
+    def custom_loss(real_loss, noise_class=0, noise_weight=0.001):
         """
         Usage:
         loss = self.custom_loss(keras.losses.categorical_crossentropy)
@@ -94,5 +95,6 @@ class LabelDiscriminator(Discriminator):
         )
         loss = self.custom_loss(keras.losses.categorical_crossentropy)
         # loss = keras.losses.categorical_crossentropy
-        discriminator.compile(loss=loss, optimizer="adam", metrics=["categorical_accuracy"])
+        opt = Adam(learning_rate=1e-4)
+        discriminator.compile(loss=loss, optimizer=opt, metrics=["categorical_accuracy"])
         return discriminator

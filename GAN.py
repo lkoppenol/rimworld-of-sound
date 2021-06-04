@@ -1,16 +1,20 @@
+import os
+from pathlib import Path
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from gan.discriminator import LabelDiscriminator
 from gan.gan import Gan
 from gan.generator import BaseGenerator
 from loguru import logger
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
-from rimworld.utils import *
+from rimworld import utils
 import soundfile as sf
 from time import time
 
 load_dotenv()
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # create .env in root folder, for example:
 # ROOT_FOLDER=D:\Projects\nsynth-data\data\stft
@@ -31,15 +35,14 @@ if DEBUG_MODE:
 
 
 def save_img(g, name, folder='img'):
-    plt.imshow(g, cmap='gray')
     folder = Path(folder)
     folder.mkdir(exist_ok=True, parents=True)
     path = folder / Path(name).with_suffix('.png')
-    plt.savefig(str(path))
+    plt.imsave(str(path), g[:, :, 0], format='png', cmap='gray', vmin=0, vmax=1)
 
 
 def save_wav(g, name, folder='wav'):
-    s = reconstruct_from_sliding_spectrum(g[:, :, 0])
+    s = utils.reconstruct_from_sliding_spectrum(g[:, :, 0])
     folder = Path(folder)
     folder.mkdir(exist_ok=True, parents=True)
     path = folder / Path(name).with_suffix('.wav')
@@ -47,16 +50,17 @@ def save_wav(g, name, folder='wav'):
 
 
 def main(label):
-    label_size = label_shapes[label]
+    label_size = utils.label_shapes[label]
     img_size = (126, 1025, 1)
     id = time()
+    logger.info(f"Running experiment with id = '{id:.0f}'")
     class_weight = {i: 1 for i in range(1, label_size)}
     class_weight[0] = 0.01
 
     train_folder = os.path.join(ROOT_FOLDER, 'train')
-    train_dataset = get_image_dataset(train_folder, label, label_size, BATCH_SIZE)
+    train_dataset = utils.get_image_dataset(train_folder, label, label_size, BATCH_SIZE, n_random_samples=30_000)
     valid_folder = os.path.join(ROOT_FOLDER, 'valid')
-    valid_dataset = get_image_dataset(valid_folder, label, label_size, BATCH_SIZE)
+    valid_dataset = utils.get_image_dataset(valid_folder, label, label_size, BATCH_SIZE, n_random_samples=1_000)
 
     if DEBUG_MODE:
         subsample = 10
@@ -85,12 +89,12 @@ def main(label):
             train_dataset,
             epochs=1,
             validation_data=valid_dataset,
-            steps_per_epoch=1000
+            steps_per_epoch=2048
         )
         logger.info("GAN-ORREA")
         gan.fit(
-            sample_size=int(2e3),
-            batch_size=int(1e1),
+            sample_size=int(2e4),
+            batch_size=int(1e2),
             epochs=epoch_step,
             validation_split=0.1
         )

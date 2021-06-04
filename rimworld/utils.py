@@ -162,7 +162,7 @@ def reset(batch_size, label_size):
     return imgs, labels
 
 
-def get_image_dataset(path, label_type, label_size, batch_size):
+def get_image_dataset(path, label_type, label_size, batch_size, n_random_samples):
     def normalize_function(image, label):
         image = tf.cast(image / 255., tf.float32)
         return image, label
@@ -177,9 +177,15 @@ def get_image_dataset(path, label_type, label_size, batch_size):
             batch_size=batch_size,
             image_size=(126, 1025),
         ) \
-        .shuffle(32) \
         .map(normalize_function)
-    return dataset
+
+    if n_random_samples:
+        noise = tf.random.uniform((n_random_samples, batch_size, 128, 1025, 1))
+        labels = tf.constant(0, shape=(n_random_samples, batch_size))
+        random_dataset = tf.data.Dataset.from_tensor_slices((noise, labels))
+        return tf.data.Dataset.zip((dataset, random_dataset)).shuffle(32)
+    else:
+        return dataset.shuffle(32)
 
 
 def reconstruct_from_sliding_spectrum(S_abs):

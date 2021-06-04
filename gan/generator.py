@@ -39,5 +39,4 @@ class BaseGenerator(Generator):
             layers.Dense(output_values, activation='sigmoid'),
             layers.Reshape(self.output_shape)
         ], name='generator')
-        generator.summary()
         return generator
