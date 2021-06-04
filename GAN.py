@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+import librosa
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from gan.discriminator import LabelDiscriminator
@@ -42,7 +44,7 @@ def save_img(g, name, folder='img'):
 
 
 def save_wav(g, name, folder='wav'):
-    s = utils.reconstruct_from_sliding_spectrum(g[:, :, 0])
+    s = librosa.core.spectrum.griffinlim(g[:, :, 0])
     folder = Path(folder)
     folder.mkdir(exist_ok=True, parents=True)
     path = folder / Path(name).with_suffix('.wav')
@@ -58,9 +60,9 @@ def main(label):
     class_weight[0] = 0.01
 
     train_folder = os.path.join(ROOT_FOLDER, 'train')
-    train_dataset = utils.get_image_dataset(train_folder, label, label_size, BATCH_SIZE, n_random_samples=30_000)
+    train_dataset = utils.get_image_dataset(train_folder, label, label_size, BATCH_SIZE, n_random_samples=1e3)
     valid_folder = os.path.join(ROOT_FOLDER, 'valid')
-    valid_dataset = utils.get_image_dataset(valid_folder, label, label_size, BATCH_SIZE, n_random_samples=1_000)
+    valid_dataset = utils.get_image_dataset(valid_folder, label, label_size, BATCH_SIZE, n_random_samples=3e2)
 
     if DEBUG_MODE:
         subsample = 10

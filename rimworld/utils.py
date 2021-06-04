@@ -180,31 +180,10 @@ def get_image_dataset(path, label_type, label_size, batch_size, n_random_samples
         .map(normalize_function)
 
     if n_random_samples:
-        noise = tf.random.uniform((n_random_samples, batch_size, 128, 1025, 1))
-        labels = tf.constant(0, shape=(n_random_samples, batch_size))
+        random_batches = int(n_random_samples / batch_size)
+        noise = tf.random.uniform((random_batches, batch_size, 126, 1025, 1))
+        labels = tf.constant(0, shape=(random_batches, batch_size), dtype=tf.float64)
         random_dataset = tf.data.Dataset.from_tensor_slices((noise, labels))
-        return tf.data.Dataset.zip((dataset, random_dataset)).shuffle(32)
+        return dataset.concatenate(random_dataset).shuffle(32)
     else:
         return dataset.shuffle(32)
-
-
-def reconstruct_from_sliding_spectrum(S_abs):
-    return librosa.core.spectrum.griffinlim(S_abs)
-
-# def get_n_samples_for_storing_generator_results(path, n=5, random=True):
-#     funky_extra_folder_for_tensorflow_image_dataset_function = os.walk(path).next()[1]
-#     print(funky_extra_folder_for_tensorflow_image_dataset_function)
-#
-#     files = np.zeros(n)
-#     if random:
-#         for i in range(n):
-#             files[i] = random.choice(os.listdir(path))
-#     else:
-#
-#
-#     assert len(files) is not 0
-#
-#     return files
-
-
-
