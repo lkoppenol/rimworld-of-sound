@@ -35,13 +35,33 @@ class BaseGenerator(Generator):
     def _compile_model(self):
         output_values = reduce(operator.mul, self.output_shape, 1)
         generator = keras.Sequential([
-            keras.Input(shape=self.input_length),
-            layers.Dense(512, activation='relu'),
-            layers.Dense(output_values, activation='sigmoid'),
-            layers.Reshape(self.output_shape),
-            # layers.Conv2D(8, (5, 5), padding='same'),
-            # layers.Conv2D(1, (1, 1), padding='same', activation='sigmoid')
+            keras.layers.Reshape((1,11,1)),
+            keras.layers.Conv2DTranspose(8, (2,6), strides=1, padding="VALID"),
+            #keras.layers.BatchNormalization(),
+            # keras.layers.Dense(output_values/64, activation="tanh"),
+            # layers.Reshape((16,128,1)),
+            layers.Conv2DTranspose(128, kernel_size=3, strides=4, padding="SAME"),
+            keras.layers.BatchNormalization(),
+            layers.LeakyReLU(alpha=0.01),
+            layers.Conv2DTranspose(64, kernel_size=3, strides=2, padding="SAME"),
+            keras.layers.BatchNormalization(),
+            layers.LeakyReLU(alpha=0.01),
+            layers.Conv2DTranspose(32, kernel_size=3, strides=2, padding="SAME"),
+            keras.layers.BatchNormalization(),
+            layers.LeakyReLU(alpha=0.01),
+            layers.Conv2DTranspose(32, kernel_size=3, strides=2, padding="SAME"),
+            keras.layers.BatchNormalization(),
+            layers.LeakyReLU(alpha=0.01),
+            layers.Conv2DTranspose(1, kernel_size=3, strides=2, padding="SAME", activation="tanh"),
+            # layers.Reshape(self.output_shape),
+            #
+            # keras.layers.Dense(output_values, activation="relu", kernel_regularizer=keras.regularizers.l1_l2(l1=1e-5, l2=1e-4)),
+            # keras.layers.BatchNormalization(),
+            #layers.Reshape(self.output_shape),
         ], name='generator')
+
+        print("&&&&&&&&&&& GENERATOR &&&&&&&&&&&&&&")
+        generator.summary()
         return generator
 
 

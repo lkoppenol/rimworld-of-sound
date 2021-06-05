@@ -37,14 +37,24 @@ class MultiLabelDiscriminator(Discriminator):
     def _compile_model(self):
         discriminator = keras.Sequential(
             [
-                keras.layers.Input(shape=self.input_shape),
-                keras.layers.Conv2D(8, kernel_size=(5, 10), activation='relu'),
+                keras.layers.Input(shape=(128, 1024, 1)),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
                 keras.layers.MaxPooling2D(pool_size=(3, 10)),
-                keras.layers.Conv2D(16, kernel_size=(5, 10), activation='relu'),
+                keras.layers.Conv2D(16, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.Conv2D(16, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
                 keras.layers.MaxPooling2D(pool_size=(3, 10)),
+                keras.layers.Conv2D(32, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.Conv2D(32, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
                 keras.layers.Flatten(),
-                keras.layers.Dense(512, activation='relu'),
-                keras.layers.Dense(self.num_classes, activation='sigmoid'),
+                keras.layers.Dropout(0.3),
+                keras.layers.Dense(self.num_classes, activation='softmax'),
             ],
             name=self.name
         )
@@ -82,20 +92,38 @@ class LabelDiscriminator(Discriminator):
     def _compile_model(self):
         discriminator = keras.Sequential(
             [
-                keras.layers.Input(shape=self.input_shape),
-                keras.layers.Conv2D(8, kernel_size=(5, 10), activation='relu'),
-                keras.layers.MaxPooling2D(pool_size=(3, 10)),
-                keras.layers.Conv2D(16, kernel_size=(5, 10), activation='relu'),
-                keras.layers.MaxPooling2D(pool_size=(3, 10)),
+                keras.layers.Input(shape=(128, 1024, 1)),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.BatchNormalization(),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.4),
+                keras.layers.MaxPooling2D(pool_size=(3, 3)),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.4),
+                keras.layers.Conv2D(8, kernel_size=(3, 3), activation='swish', padding="SAME",
+                                    kernel_regularizer=keras.regularizers.l1_l2 (l1=1e-5, l2=1e-4)),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.4),
                 keras.layers.Flatten(),
-                keras.layers.Dense(512, activation='relu'),
-                keras.layers.Dense(self.num_classes, activation='sigmoid'),
+                # keras.layers.Dropout(0.3),
+                keras.layers.Dense(self.num_classes, activation='softmax'),
             ],
             name=self.name
         )
-        loss = self.custom_loss(keras.losses.categorical_crossentropy)
-        # loss = keras.losses.categorical_crossentropy
-        opt = Adam()
+
+        #loss = self.custom_loss(keras.losses.categorical_crossentropy)
+
+        loss = keras.losses.categorical_crossentropy
+        print("##############DISCRIMINATOR#############")
+        discriminator.summary()
+
+        opt = Adam(learning_rate=1e-4)
+
         discriminator.compile(loss=loss, optimizer=opt, metrics=["categorical_accuracy"])
         return discriminator
 

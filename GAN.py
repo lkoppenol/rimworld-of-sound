@@ -25,8 +25,8 @@ ROOT_FOLDER = os.getenv('ROOT_FOLDER')
 # LABEL = 'instrument_subtype'
 # LABEL_ID = 'instrument_and_pitch_single_label'
 # LABEL = 'no_organ'
-# LABEL = 'organ_pitch'
-LABEL = 'electronic_bass_pitch'
+
+LABEL = 'instrument'
 BATCH_SIZE = 32
 EPOCHS = 200
 SAMPLE_RATE = 16000
@@ -54,11 +54,11 @@ def save_wav(g, name, folder='wav'):
 
 def main(label):
     label_size = utils.label_shapes[label]
-    img_size = (126, 1025, 1)
+    img_size = (128, 1024, 1)
     id = time()
     logger.info(f"Running experiment with id = '{id:.0f}'")
-    class_weight = {i: 1 for i in range(1, label_size)}
-    class_weight[0] = 0.01
+    #class_weight = {i: 1 for i in range(1, label_size)}
+    #class_weight[0] = 0.01
 
     train_folder = os.path.join(ROOT_FOLDER, 'train')
     train_dataset = utils.get_image_dataset(
@@ -105,12 +105,12 @@ def main(label):
             train_dataset,
             epochs=1,
             validation_data=valid_dataset,
-            # steps_per_epoch=2048
+            steps_per_epoch=512
         )
         logger.info(f"{epoch_count:03} GAN-ORREA")
         gan.fit(
             sample_size=int(2e4),
-            batch_size=int(1e2),
+            batch_size=64,
             epochs=epoch_step,
             validation_split=0.1
         )
@@ -118,10 +118,10 @@ def main(label):
         generated = gan.generate(range(label_size))
 
         for i, g in enumerate(generated):
-            if i % 10 == 0:
-                name = f"{id:.0f}-{epoch_count:04}-{i:04}"
-                save_img(g, name)
-                save_wav(g, name)
+            # if i % 10 == 0:
+            name = f"{id:.0f}-{epoch_count:04}-{i:04}"
+            save_img(g, name)
+            save_wav(g, name)
 
 
 if __name__ == "__main__":

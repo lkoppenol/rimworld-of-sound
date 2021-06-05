@@ -29,7 +29,7 @@ def read_metadata(data_folder: Path, instrument_filter: str=None, filename: str=
 
 
 label_shapes = dict(
-    instrument=1,
+    instrument=11,
     instrument_subtype=33,
     pitch=128,
     instrument_subtype_and_pitch=5+112,  # 4 instruments, 1 other, 112 pitches
@@ -185,12 +185,12 @@ def get_image_dataset(path, label_type, label_size, batch_size, n_random_samples
             labels=labels,
             color_mode='grayscale',
             batch_size=batch_size,
-            image_size=(126, 1025),
+            image_size=(128, 1024),
         ) \
         .map(normalize_function)
 
     if n_random_samples:
-        noise = tf.random.uniform((n_random_samples, 126, 1025, 1))
+        noise = tf.random.uniform((n_random_samples, 128, 1024, 1))
         labels = tf.one_hot([0 for _ in range(n_random_samples)], depth=label_size, dtype=tf.float64)
         random_dataset = tf.data.Dataset \
             .from_tensor_slices((noise, labels)) \
