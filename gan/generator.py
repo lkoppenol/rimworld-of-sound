@@ -29,16 +29,31 @@ class Generator(abc.ABC):
 
 class BaseGenerator(Generator):
     def __init__(self, input_length: int, output_shape: (int,)):
-        name = f'base_generator_{random.randint(0, 999999):06}'
+        name = f'flat_generator_{random.randint(0, 999999):06}'
         super().__init__(input_length, output_shape, name)
 
     def _compile_model(self):
         output_values = reduce(operator.mul, self.output_shape, 1)
         generator = keras.Sequential([
             keras.Input(shape=self.input_length),
-            layers.Dense(output_values, activation='relu'),
+            layers.Dense(512, activation='relu'),
+            layers.Dense(output_values, activation='sigmoid'),
             layers.Reshape(self.output_shape),
-            layers.Conv2D(8, (5, 5), padding='same'),
-            layers.Conv2D(1, (1, 1), padding='same', activation='sigmoid')
+            # layers.Conv2D(8, (5, 5), padding='same'),
+            # layers.Conv2D(1, (1, 1), padding='same', activation='sigmoid')
+        ], name='generator')
+        return generator
+
+
+class FlatGenerator(Generator):
+    def __init__(self, input_length: int, output_shape: (int,)):
+        name = f'base_generator_{random.randint(0, 999999):06}'
+        super().__init__(input_length, output_shape, name)
+
+    def _compile_model(self):
+        generator = keras.Sequential([
+            keras.Input(shape=self.input_length),
+            layers.Dense(512, activation='relu'),
+            layers.Dense(self.output_shape, activation='sigmoid'),
         ], name='generator')
         return generator

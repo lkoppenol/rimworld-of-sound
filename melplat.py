@@ -1,19 +1,26 @@
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from pathlib import Path
 
 import librosa
+import numpy as np
+import pandas as pd
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+from rimworld.utils import get_label
 
-from gan.discriminator import LabelDiscriminator
+
+
+from gan.discriminator import LabelDiscriminator, FlatDiscriminator
 from gan.gan import Gan
-from gan.generator import BaseGenerator
+from gan.generator import BaseGenerator, FlatGenerator
 from loguru import logger
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from rimworld import utils
 import soundfile as sf
 from time import time
+import tensorflow as tf
 
 load_dotenv()
 
@@ -26,7 +33,8 @@ ROOT_FOLDER = os.getenv('ROOT_FOLDER')
 # LABEL_ID = 'instrument_and_pitch_single_label'
 # LABEL = 'no_organ'
 # LABEL = 'organ_pitch'
-LABEL = 'electronic_bass_pitch'
+LABEL = "pitch"
+# LABEL = 'electronic_bass_pitch'
 BATCH_SIZE = 32
 EPOCHS = 200
 SAMPLE_RATE = 16000
@@ -38,45 +46,44 @@ if DEBUG_MODE:
 
 
 def save_img(g, name, folder='img'):
+    g2 = np.tile(g, (100, 1)).T
     folder = Path(folder)
     folder.mkdir(exist_ok=True, parents=True)
     path = folder / Path(name).with_suffix('.png')
-    plt.imsave(str(path), g[:, :, 0], format='png', cmap='gray')
+    plt.imsave(str(path), g2, format='png', cmap='gray')
 
 
 def save_wav(g, name, folder='wav'):
-    s = librosa.core.spectrum.griffinlim(g[:, :, 0])
-    folder = Path(folder)
-    folder.mkdir(exist_ok=True, parents=True)
-    path = folder / Path(name).with_suffix('.wav')
-    sf.write(str(path), s, SAMPLE_RATE)
+    try:
+        g2 = np.tile(g, (100, 1)).T
+        s = librosa.feature.inverse.mel_to_audio(g2, sr=16000, hop_length=2048)
+        # s = librosa.core.spectrum.griffinlim(g2)
+        folder = Path(folder)
+        folder.mkdir(exist_ok=True, parents=True)
+        path = folder / Path(name).with_suffix('.wav')
+        sf.write(str(path), s, SAMPLE_RATE)
+    except Exception as e:
+        logger.error(str(e))
 
 
 def main(label):
     label_size = utils.label_shapes[label]
-    img_size = (126, 1025, 1)
     id = time()
     logger.info(f"Running experiment with id = '{id:.0f}'")
     class_weight = {i: 1 for i in range(1, label_size)}
     class_weight[0] = 0.01
 
-    train_folder = os.path.join(ROOT_FOLDER, 'train')
-    train_dataset = utils.get_image_dataset(
-        train_folder,
-        label,
-        label_size,
-        BATCH_SIZE,
-        n_random_samples=int(1e3)
-    )
+    train_df = pd.read_csv(os.path.join(ROOT_FOLDER, 'train.csv'))
+    train_df = train_df[train_df.filename.str.contains('organ')]
+    train_labels = train_df.filename.apply(lambda x: get_label(x, label, label_size, one_hot=False))
+    train_labels = tf.one_hot(train_labels.values, depth=label_size)
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_df.drop('filename', axis=1), train_labels)).batch(1024)
 
-    valid_folder = os.path.join(ROOT_FOLDER, 'valid')
-    valid_dataset = utils.get_image_dataset(
-        valid_folder,
-        label,
-        label_size,
-        BATCH_SIZE,
-        n_random_samples=int(3e2)
-    )
+    valid_df = pd.read_csv(os.path.join(ROOT_FOLDER, 'test.csv'))
+    valid_df = valid_df[valid_df.filename.str.contains('organ')]
+    valid_labels = valid_df.filename.apply(lambda x: get_label(x, label, label_size, one_hot=False))
+    valid_labels = tf.one_hot(valid_labels.values, depth=label_size)
+    valid_dataset = tf.data.Dataset.from_tensor_slices((valid_df.drop('filename', axis=1), valid_labels)).batch(1024)
 
     if DEBUG_MODE:
         subsample = 10
@@ -84,14 +91,14 @@ def main(label):
         train_dataset = train_dataset.take(subsample)
         valid_dataset = valid_dataset.take(subsample)
 
-    discriminator = LabelDiscriminator(
-        input_shape=img_size,
+    discriminator = FlatDiscriminator(
+        input_shape=train_df.shape[1] - 1,
         num_classes=label_size
     )
 
-    generator = BaseGenerator(
+    generator = FlatGenerator(
         input_length=label_size,
-        output_shape=img_size
+        output_shape=train_df.shape[1] - 1
     )
 
     # GAN MET DIE BANAN
@@ -109,7 +116,7 @@ def main(label):
         )
         logger.info(f"{epoch_count:03} GAN-ORREA")
         gan.fit(
-            sample_size=int(2e4),
+            sample_size=int(2e6),
             batch_size=int(1e2),
             epochs=epoch_step,
             validation_split=0.1
@@ -117,11 +124,11 @@ def main(label):
         logger.info(f"{epoch_count:03} GENERATE")
         generated = gan.generate(range(label_size))
 
-        for i, g in enumerate(generated):
-            if i % 10 == 0:
-                name = f"{id:.0f}-{epoch_count:04}-{i:04}"
-                save_img(g, name)
-                save_wav(g, name)
+        for i, g in enumerate(generated[12:24]):
+            # if i % 10 == 0:
+            name = f"{id:.0f}-{epoch_count:04}-{i:04}"
+            save_img(g, name)
+            save_wav(g, name)
 
 
 if __name__ == "__main__":
